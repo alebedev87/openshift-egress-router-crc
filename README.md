@@ -55,3 +55,8 @@ Commercial support is available at
 ```bash
 $ oc logs egress -c egress-router
 ```
+
+## Links
+- [Using Egress Router](https://docs.openshift.com/container-platform/4.12/networking/openshift_sdn/using-an-egress-router.html)
+- [DNS mode](https://docs.openshift.com/container-platform/4.12/networking/openshift_sdn/deploying-egress-router-dns-redirection.html)
+- [Egress Router tutorial](https://cloud.redhat.com/blog/accessing-external-services-using-egress-router)
