@@ -1,0 +1,44 @@
+Running haproxy with config:
+  
+  global
+      log         127.0.0.1 local2
+  
+      chroot      /var/lib/haproxy
+      pidfile     /var/lib/haproxy/run/haproxy.pid
+      maxconn     4000
+      user        haproxy
+      group       haproxy
+  
+  defaults
+      log                     global
+      mode                    tcp
+      option                  dontlognull
+      option                  tcplog
+      option                  redispatch
+      retries                 3
+      timeout http-request    100s
+      timeout queue           1m
+      timeout connect         10s
+      timeout client          1m
+      timeout server          1m
+      timeout http-keep-alive 100s
+      timeout check           10s
+  
+  resolvers dns-resolver
+      nameserver ns1 10.217.4.10:53
+      resolve_retries      3
+      timeout retry        1s
+      hold valid           10s
+  
+  
+  frontend fe1
+      bind :80
+      default_backend be1
+  
+  backend be1
+      server dest1 google.com:80 check resolvers dns-resolver resolve-prefer ipv4
+  
+
+
+May 16 15:40:50 localhost haproxy[1]: Proxy fe1 started.
+May 16 15:40:50 localhost haproxy[1]: Proxy be1 started.
