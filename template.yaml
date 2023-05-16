@@ -1,0 +1,81 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: egress-router-dns-mode
+  template: egress-router-dns-mode
+metadata:
+  annotations:
+    openshift.io/documentation-url: https://docs.openshift.com/container-platform/4.12/networking/openshift_sdn/deploying-egress-router-dns-redirection.html
+  labels:
+    samples.operator.openshift.io/managed: "true"
+  name: egress-router-dns-mode
+objects:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${NAME}
+    spec:
+      ports:
+        - name: con
+          port: ${{DESTINATION_PORT}}
+          targetPort: ${{DESTINATION_PORT}}
+      selector:
+        name: ${NAME}
+  - apiVersion: v1
+    kind: Pod
+    metadata:
+      name: ${NAME}
+      labels:
+        name: ${NAME}
+      annotations:
+        pod.network.openshift.io/assign-macvlan: "true"
+    spec:
+      initContainers:
+        - name: init
+          image: registry.redhat.io/openshift4/ose-egress-router
+          securityContext:
+            privileged: true
+          env:
+            - name: EGRESS_SOURCE
+              value: ${SOURCE_IP}
+              # The init image will add the source IP to macvlan interface created by OpenShift thanks to the pod's annotation.
+              # Then it will replace the default routing gateway with this gateway using macvlan interface.
+              # So the container's default gateway which normally sends the traffic to the Kube bridge will be replaced with the default gateway of the node.
+              # To put it simpler: send all unrouted traffic off the node using the source IP of macvlan interface.
+            - name: EGRESS_GATEWAY
+              value: ${GATEWAY_IP}
+            - name: EGRESS_ROUTER_MODE
+              value: dns-proxy
+      containers:
+        - name: egress-router
+          image: ${IMAGE}
+          securityContext:
+            privileged: true
+          env:
+            - name: EGRESS_DNS_PROXY_DESTINATION
+              value: |-
+                ${DESTINATION_PORT} ${DESTINATION_IP}
+            - name: EGRESS_DNS_PROXY_DEBUG
+              value: "1"
+parameters:
+  - description: The name of the OpenShift egress router pod.
+    name: NAME
+    required: true
+    value: egress
+  - description: The image of the OpenShift egress router pod.
+    name: IMAGE
+    required: true
+    value: registry.redhat.io/openshift4/ose-egress-dns-proxy
+  - description: The source IP for the OpenShift egress router. It has to be from the physical (not OpenShift) network.
+    name: SOURCE_IP
+    required: true
+  - description: The node's default gateway IP for the OpenShift egress router. It has to be from the physical (not OpenShift) network.
+    name: GATEWAY_IP
+    required: true
+  - description: The destination IP or DNS name where the egress traffic will be routed to.
+    name: DESTINATION_IP
+    required: true
+  - description: The port where the egress traffic will be routed to.
+    name: DESTINATION_PORT
+    required: true
+    value: "80"
