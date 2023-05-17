@@ -38,10 +38,10 @@ objects:
           env:
             - name: EGRESS_SOURCE
               value: ${SOURCE_IP}
-              # The init image will add the source IP to macvlan interface created by OpenShift thanks to the pod's annotation.
-              # Then it will replace the default routing gateway with this gateway using macvlan interface.
-              # So the container's default gateway which normally sends the traffic to the Kube bridge will be replaced with the default gateway of the node.
-              # To put it simpler: send all unrouted traffic off the node using the source IP of macvlan interface.
+              # The init container adds the source IP to the macvlan interface created by OpenShift (thanks to the pod's annotation).
+              # Then it replaces the default gateway with this gateway using the macvlan interface.
+              # So the container's default gateway which normally sends the traffic to the OpenShift bridge gets replaced with the default gateway of the node.
+              # As a result, the container's egress traffic gets sent off the node using the source IP of the macvlan interface.
             - name: EGRESS_GATEWAY
               value: ${GATEWAY_IP}
             - name: EGRESS_ROUTER_MODE
